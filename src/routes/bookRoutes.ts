@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import bookController from '../controllers/bookController';
+import { auth } from '../middleware/auth';
 
 const router = Router();
-
+router.use(auth);
 // GET routes
 router.get('/', bookController.getBooks);
 router.get('/:id', bookController.getBook);

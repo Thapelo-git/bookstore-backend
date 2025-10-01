@@ -1,3 +1,15 @@
+import { Request } from 'express';
+
+export interface IUser {
+  _id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: 'user' | 'admin';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IBook {
   _id?: string;
   title: string;
@@ -43,4 +55,22 @@ export interface BookQueryParams {
   available?: boolean;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+}
+export interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
 }

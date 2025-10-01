@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
-import Book from '../models/Book';
 
+import Book from '../models/Book';
+import { AuthRequest } from '../types/book';
 export class BookController {
-  // GET /api/books - List all books
- // In the getBooks method, fix the search logic:
-async getBooks(req: Request, res: Response) {
+ 
+async getBooks(req: AuthRequest, res: Response) {
   try {
     const {
       page = 1,
@@ -77,7 +76,7 @@ async getBooks(req: Request, res: Response) {
 }
 
   // GET /api/books/:id - Get single book
-  async getBook(req: Request, res: Response) {
+  async getBook(req: AuthRequest, res: Response) {
     try {
       const book = await Book.findById(req.params.id);
       if (!book) {
@@ -99,7 +98,7 @@ async getBooks(req: Request, res: Response) {
   }
 
   // POST /api/books - Create book
-  async createBook(req: Request, res: Response) {
+  async createBook(req: AuthRequest, res: Response) {
     try {
       const book = new Book(req.body);
       const savedBook = await book.save();
@@ -117,7 +116,7 @@ async getBooks(req: Request, res: Response) {
   }
 
   // PUT /api/books/:id - Update book
-  async updateBook(req: Request, res: Response) {
+  async updateBook(req: AuthRequest, res: Response) {
     try {
       const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
       if (!book) {
@@ -140,7 +139,7 @@ async getBooks(req: Request, res: Response) {
   }
 
   // DELETE /api/books/:id - Delete book
-  async deleteBook(req: Request, res: Response) {
+  async deleteBook(req: AuthRequest, res: Response) {
     try {
       const book = await Book.findByIdAndDelete(req.params.id);
       if (!book) {
