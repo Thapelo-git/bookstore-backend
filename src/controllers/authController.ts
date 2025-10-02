@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import User from '../models/User';
 import { LoginCredentials, RegisterCredentials, AuthRequest } from '../types/book';
+import BlacklistedToken from '../models/BlacklistedToken';
 
 export const register = async (req: Request<{}, {}, RegisterCredentials>, res: Response) => {
   try {
@@ -25,12 +26,15 @@ export const register = async (req: Request<{}, {}, RegisterCredentials>, res: R
       });
     }
 
+    // ✅ FIXED: Just create the user - let the pre-save hook handle hashing
     user = new User({ name, email, password });
-
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
+    
+    console.log('🔑 Before save - password (plain text):', user.password);
+    
+    // The pre-save hook in User model will automatically hash the password
     await user.save();
+
+    console.log('✅ User saved with auto-hashed password');
 
     const payload = {
       user: {
@@ -79,22 +83,41 @@ export const login = async (req: Request<{}, {}, LoginCredentials>, res: Respons
 
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!password) {
+      console.log('❌ Password missing in request');
+      return res.status(400).json({ 
+        success: false,
+        message: 'Password is required' 
+      });
+    }
+
+    const user = await User.findOne({ email }).select('+password');
+    
     if (!user) {
       return res.status(400).json({ 
         success: false,
         message: 'Invalid credentials' 
       });
     }
-
-    const isMatch = await bcrypt.compare(password, user.password);
+   
+    console.log('✅ User found:', user.email);
+    console.log('🔑 Stored password hash:', user.password ? 'EXISTS' : 'MISSING');
+    console.log('🔑 Input password:', password);
+    
+    console.log('🔐 Starting password comparison...');
+    const isMatch = await user.comparePassword(password);
+    console.log('🔐 Password match result:', isMatch);
+    
     if (!isMatch) {
+      console.log('❌ Password incorrect for user:', email);
       return res.status(400).json({ 
         success: false,
-        message: 'Invalid credentials' 
+        message: 'Invalid password' 
       });
     }
 
+    console.log('✅ Password correct, generating token...');
+    
     const payload = {
       user: {
         id: user.id,
@@ -247,9 +270,8 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    // ✅ FIXED: Just set the new password - pre-save hook will hash it
+    user.password = newPassword;
     await user.save();
 
     res.json({
@@ -264,17 +286,37 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
 export const logout = async (req: AuthRequest, res: Response) => {
   try {
-    // In stateless JWT, we simply tell the client to remove the token
-    // For enhanced security, you could implement token blacklisting here
+    const token = req.header('x-auth-token');
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    // Decode token to get expiration
+    const decoded = jwt.decode(token) as any;
     
+    if (decoded && decoded.exp) {
+      // Add token to blacklist
+      await BlacklistedToken.create({
+        token,
+        userId: req.user?.id,
+        expiresAt: new Date(decoded.exp * 1000),
+        reason: 'logout'
+      });
+    }
+
     res.json({
       success: true,
-      message: 'Logout successful'
+      message: 'Logout successful. Token has been invalidated.'
     });
   } catch (err: any) {
-    console.error(err);
+    console.error('Logout error:', err);
     res.status(500).json({ 
       success: false,
       message: 'Server error during logout' 

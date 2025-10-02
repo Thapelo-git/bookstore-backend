@@ -1,12 +1,12 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthRequest } from '../types/book';
-
+import BlacklistedToken from '../models/BlacklistedToken';
 /**
  * Authentication middleware to verify JWT token
  * Adds user object to request if token is valid
  */
-export const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const auth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // Get token from header
     const token = req.header('x-auth-token');
@@ -19,13 +19,20 @@ export const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
       });
     }
 
-    // Verify token
+    const blacklistedToken = await BlacklistedToken.findOne({ token });
+    if (blacklistedToken) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'Token has been invalidated. Please login again.' 
+      });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-    
-    // Add user to request object
     req.user = decoded.user;
-    
     next();
+
+
+  
   } catch (error) {
     console.error('Auth middleware error:', error);
     
