@@ -5,7 +5,7 @@ import { validationResult } from 'express-validator';
 import User from '../models/User';
 import { LoginCredentials, RegisterCredentials, AuthRequest } from '../types/book';
 import BlacklistedToken from '../models/BlacklistedToken';
-
+import { createSession, removeSession } from '../middleware/auth';
 export const register = async (req: Request<{}, {}, RegisterCredentials>, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -47,10 +47,10 @@ export const register = async (req: Request<{}, {}, RegisterCredentials>, res: R
     jwt.sign(
       payload,
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' },
+      { expiresIn: '1d' },
       (err, token) => {
         if (err) throw err;
-        res.status(201).json({
+        res.status(201).cookie("Token",token).json({
           success: true,
           token,
           user: {
@@ -58,7 +58,8 @@ export const register = async (req: Request<{}, {}, RegisterCredentials>, res: R
             name: user.name,
             email: user.email,
             role: user.role
-          }
+          },
+           message: 'Registration successful'
         });
       }
     );
@@ -129,9 +130,16 @@ export const login = async (req: Request<{}, {}, LoginCredentials>, res: Respons
     jwt.sign(
       payload,
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' },
+      { expiresIn: '1h' },
       (err, token) => {
         if (err) throw err;
+         createSession(user.id, token);
+          res.cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production', // HTTPS in production
+          sameSite: 'strict',
+          maxAge: 1 * 24 * 60 * 60 * 1000 // 7 days
+        });
         res.json({
           success: true,
           token,
@@ -140,7 +148,8 @@ export const login = async (req: Request<{}, {}, LoginCredentials>, res: Respons
             name: user.name,
             email: user.email,
             role: user.role
-          }
+          },
+            message: 'Login successful'
         });
       }
     );
@@ -289,13 +298,17 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
 export const logout = async (req: AuthRequest, res: Response) => {
   try {
-    const token = req.header('x-auth-token');
+    const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                  req.cookies?.token;
 
     if (!token) {
       return res.status(400).json({
         success: false,
         message: 'No token provided'
       });
+    }
+     if (req.user?.id) {
+      removeSession(req.user.id);
     }
 
     // Decode token to get expiration
@@ -311,6 +324,7 @@ export const logout = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    res.clearCookie('token');
     res.json({
       success: true,
       message: 'Logout successful. Token has been invalidated.'

@@ -17,7 +17,7 @@ async getBooks(req: AuthRequest, res: Response) {
     } = req.query;
 
     // Build query object
-    const query: any = {};
+    const query: any = {createdBy: req.user?.id};
 
     // FIXED: Proper search functionality
     if (search && typeof search === 'string') {
@@ -78,7 +78,7 @@ async getBooks(req: AuthRequest, res: Response) {
   // GET /api/books/:id - Get single book
   async getBook(req: AuthRequest, res: Response) {
     try {
-      const book = await Book.findById(req.params.id);
+      const book = await Book.findById({_id:req.params.id,createdBy: req.user?.id });
       if (!book) {
         return res.status(404).json({
           success: false,
@@ -100,8 +100,42 @@ async getBooks(req: AuthRequest, res: Response) {
   // POST /api/books - Create book
   async createBook(req: AuthRequest, res: Response) {
     try {
-      const book = new Book(req.body);
+      const { title, author, isbn, publishedYear } = req.body;
+      
+      if (!title || !author || !isbn || !publishedYear) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields: title, author, isbn, and publishedYear are required'
+        });
+      }
+
+      // ✅ Check if ISBN already exists for this user
+      const existingBook = await Book.findOne({ 
+        isbn: isbn.trim(), 
+        createdBy: req.user?.id 
+      });
+      
+      if (existingBook) {
+        return res.status(400).json({
+          success: false,
+          message: 'You already have a book with this ISBN'
+        });
+      }
+
+      // Create book with user ownership
+      const bookData = {
+        title: title.trim(),
+        author: author.trim(),
+        isbn: isbn.trim(),
+        publishedYear: parseInt(publishedYear),
+        available: req.body.available !== undefined ? req.body.available : true,
+        genre: req.body.genre || '',
+        description: req.body.description || '',
+        createdBy: req.user?.id // ✅ Set user ownership
+      };
+      const book = new Book(bookData);
       const savedBook = await book.save();
+      console.log('✅ Book saved successfully:', savedBook);
       res.status(201).json({
         success: true,
         data: savedBook,
@@ -118,7 +152,7 @@ async getBooks(req: AuthRequest, res: Response) {
   // PUT /api/books/:id - Update book
   async updateBook(req: AuthRequest, res: Response) {
     try {
-      const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      const book = await Book.findByIdAndUpdate({_id:req.params.id,createdBy: req.user?.id }, req.body, { new: true,runValidators:true });
       if (!book) {
         return res.status(404).json({
           success: false,
@@ -141,7 +175,7 @@ async getBooks(req: AuthRequest, res: Response) {
   // DELETE /api/books/:id - Delete book
   async deleteBook(req: AuthRequest, res: Response) {
     try {
-      const book = await Book.findByIdAndDelete(req.params.id);
+      const book = await Book.findByIdAndDelete({_id:req.params.id,createdBy: req.user?.id });
       if (!book) {
         return res.status(404).json({
           success: false,
@@ -159,6 +193,41 @@ async getBooks(req: AuthRequest, res: Response) {
       });
     }
   }
+  async getBookStats(req: AuthRequest, res: Response) {
+    try {
+      const stats = await Book.aggregate([
+        { $match: { createdBy: req.user?.id } },
+        {
+          $group: {
+            _id: null,
+            totalBooks: { $sum: 1 },
+            availableBooks: { $sum: { $cond: ['$available', 1, 0] } },
+            unavailableBooks: { $sum: { $cond: ['$available', 0, 1] } },
+            genres: { $addToSet: '$genre' }
+          }
+        }
+      ]);
+
+      const result = stats[0] || {
+        totalBooks: 0,
+        availableBooks: 0,
+        unavailableBooks: 0,
+        genres: []
+      };
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Error getting book stats:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error getting book statistics'
+      });
+    }
+  }
+
 }
 
 export default new BookController();

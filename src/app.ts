@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 
 // Vercel provides PORT, use 5001 as fallback for local development
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5002;
 
 // Security middleware
 app.use(helmet());
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
     success: false,
@@ -42,8 +42,8 @@ app.use('/api/', limiter);
 
 // More strict rate limiting for auth routes
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs for auth
+  windowMs: 1 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 5 requests per windowMs for auth
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again later.'

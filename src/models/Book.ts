@@ -49,6 +49,11 @@ const BookSchema: Schema = new Schema({
   description: {
     type: String,
     maxlength: [1000, 'Description cannot exceed 1000 characters']
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 }, {
   timestamps: true,
@@ -58,7 +63,7 @@ const BookSchema: Schema = new Schema({
 // Indexes for better performance
 BookSchema.index({ title: 'text', author: 'text', description: 'text' });
 BookSchema.index({ author: 1, publishedYear: -1 });
-BookSchema.index({ isbn: 1 });
+BookSchema.index({ isbn: 1, createdBy: 1 }, { unique: true });
 BookSchema.index({ available: 1 });
 
 export default mongoose.model<IBook>('Book', BookSchema);

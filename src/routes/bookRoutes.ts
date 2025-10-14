@@ -8,6 +8,7 @@ router.use(auth);
 router.get('/', bookController.getBooks);
 router.get('/:id', bookController.getBook);
 
+router.get('/stats', bookController.getBookStats);
 // POST routes  
 router.post('/', bookController.createBook);
 
