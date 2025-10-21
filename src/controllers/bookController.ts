@@ -100,6 +100,12 @@ async getBooks(req: AuthRequest, res: Response) {
   // POST /api/books - Create book
   async createBook(req: AuthRequest, res: Response) {
     try {
+       if (!req.user?.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
       const { title, author, isbn, publishedYear } = req.body;
       
       if (!title || !author || !isbn || !publishedYear) {
@@ -142,9 +148,22 @@ async getBooks(req: AuthRequest, res: Response) {
         message: 'Book created successfully'
       });
     } catch (error: any) {
+
+        // More specific error handling
+  if (error.name === 'ValidationError') {
+    return res.status(400).json({
+      success: false,
+      message: `Validation error: ${error.message}`
+    });
+  } else if (error.code === 11000) {
+    return res.status(400).json({
+      success: false,
+      message: 'A book with this ISBN already exists'
+    });
+  }
       res.status(500).json({
         success: false,
-        message: 'Error creating book'
+        message: 'Error creating book'+ error.message
       });
     }
   }

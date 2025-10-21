@@ -20,9 +20,13 @@ export const validateBook = (req: Request, res: Response, next: NextFunction) =>
 
   if (!isbn) {
     errors.push('ISBN is required');
-  } else if (!/^(?:\d{10}|\d{13})$/.test(isbn)) {
-    errors.push('ISBN must be 10 or 13 digits');
+  } else {
+    const cleanIsbn = isbn.replace(/[-\s]/g, ''); // Remove hyphens and spaces
+  if (!/^(?:\d{10}|\d{13})$/.test(cleanIsbn)) {
+    errors.push('ISBN must be 10 or 13 digits (hyphens and spaces are ignored)');
   }
+  }
+  
 
   if (!publishedYear) {
     errors.push('Published year is required');
