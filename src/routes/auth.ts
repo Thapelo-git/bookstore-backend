@@ -4,14 +4,16 @@ import {
   login,
   getMe,
   updateProfile,
-  changePassword,logout
+  changePassword,logout,forgotPassword,
+  resetPassword
 } from '../controllers/authController';
 import { auth } from '../middleware/auth';
 import {
   registerValidation,
   loginValidation,
   updateProfileValidation,
-  changePasswordValidation
+  changePasswordValidation,forgotPasswordValidation,
+  resetPasswordValidation
 } from '../middleware/authValidation';
 import { handleValidationErrors } from '../middleware/validationHandler';
 
@@ -42,5 +44,8 @@ router.put('/profile', auth, updateProfileValidation, handleValidationErrors, up
 // @access  Private
 router.put('/change-password', auth, changePasswordValidation, handleValidationErrors, changePassword);
 router.post('/logout', auth, logout);
+
+router.post('/forgot-password', forgotPasswordValidation, handleValidationErrors, forgotPassword);
+router.post('/reset-password', resetPasswordValidation, handleValidationErrors, resetPassword);
 
 export default router;

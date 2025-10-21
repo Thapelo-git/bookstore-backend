@@ -1,55 +1,55 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
-  createdAt: Date;
+  role: string;
+   createdAt: Date;
   updatedAt: Date;
-  
-  // Methods
+  resetToken?: string;
+  resetTokenExpiry?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const UserSchema: Schema = new Schema({
   name: {
     type: String,
-    required: [true, 'Name is required'],
-    trim: true,
-    maxlength: [100, 'Name cannot exceed 100 characters']
+    required: true,
+    trim: true
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: true,
     unique: true,
     lowercase: true,
-    trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
+    trim: true
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    
+    required: true,
+    minlength: 6
   },
   role: {
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
+  },
+  resetToken: {
+    type: String,
+    default: null
+  },
+  resetTokenExpiry: {
+    type: Date,
+    default: null
   }
 }, {
-  timestamps: true,
-  versionKey: false
+  timestamps: true
 });
 
-// Indexes
-UserSchema.index({ email: 1 });
-UserSchema.index({ role: 1 });
-
-// Pre-save middleware to hash password
-UserSchema.pre<IUser>('save', async function(next) {
+// Password hashing middleware
+UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
   try {
@@ -61,14 +61,10 @@ UserSchema.pre<IUser>('save', async function(next) {
   }
 });
 
-// Method to compare password
+// Compare password method
 UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
-};
-
-// Static methods
-UserSchema.statics.findByEmail = function(email: string) {
-  return this.findOne({ email });
+  if (!this.password) return false;
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 export default mongoose.model<IUser>('User', UserSchema);

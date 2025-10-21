@@ -21,6 +21,7 @@ export interface IBook {
   description?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  createdBy: string;
 }
 
 export interface BookCreateRequest {
@@ -74,4 +75,12 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
+}
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
 }
