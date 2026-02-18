@@ -8,6 +8,7 @@ export interface IUser extends Document {
   role: string;
    createdAt: Date;
   updatedAt: Date;
+  isActive:boolean;
   resetToken?: string;
   resetTokenExpiry?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -33,8 +34,12 @@ const UserSchema: Schema = new Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+    enum: [ 'admin','author','client'],
+    default: 'client'
+  },
+   isActive: {
+    type: Boolean,
+    default: true
   },
   resetToken: {
     type: String,

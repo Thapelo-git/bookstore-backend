@@ -62,8 +62,10 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     role: string;
-    name:string
+    name:string;
+     _id?: any; 
   };
+  resource?: any;
 }
 
 export interface LoginCredentials {
@@ -75,6 +77,7 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
+  role?: string;
 }
 export interface ForgotPasswordRequest {
   email: string;

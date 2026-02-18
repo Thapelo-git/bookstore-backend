@@ -82,6 +82,12 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction) 
       });
     }
 
+     if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated. Please contact administrator.'
+      });
+    }
     // ✅ Add user to request
     req.user = {
       id: user._id.toString(),
@@ -168,17 +174,63 @@ export const adminAuth = (req: AuthRequest, res: Response, next: NextFunction) =
   }
 };
 
+export const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required.'
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Role (${req.user.role}) is not allowed to access this resource`
+      });
+    }
+    next();
+  };
+};
+
+export const canModifyBooks = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required.'
+    });
+  }
+
+  if (req.user.role !== 'admin' && req.user.role !== 'author') {
+    return res.status(403).json({
+      success: false,
+      message: 'Client role cannot create, edit, or delete books'
+    });
+  }
+  next();
+};
 /**
  * Optional auth middleware - doesn't block request if no token
  * but still adds user to request if token is valid
  */
-export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const optionalAuth = async (req, res, next) => {
   try {
-    const token = req.header('x-auth-token');
+    let token = req.header('Authorization');
+    
+    if (!token && req.cookies?.token) {
+      token = `Bearer ${req.cookies.token}`;
+    }
 
-    if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-      req.user = decoded.user;
+    if (token && token.startsWith('Bearer ')) {
+      const actualToken = token.replace('Bearer ', '').trim();
+      
+      // Skip blacklist check for optional auth
+      const decoded = jwt.verify(actualToken, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id).select('-password');
+      
+      if (user && user.isActive) {
+        req.user = user;
+      }
     }
 
     next();

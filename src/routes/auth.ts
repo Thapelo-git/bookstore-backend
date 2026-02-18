@@ -7,7 +7,7 @@ import {
   changePassword,logout,forgotPassword,
   resetPassword
 } from '../controllers/authController';
-import { auth } from '../middleware/auth';
+import { auth, createSession, removeSession  } from '../middleware/auth';
 import {
   registerValidation,
   loginValidation,

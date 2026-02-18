@@ -54,6 +54,15 @@ const BookSchema: Schema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+    status: {
+    type: String,
+    enum: ['available', 'unavailable', 'borrowed'],
+    default: 'available'
+  },
+  isPublic: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,

@@ -18,7 +18,7 @@ export const register = async (req: Request<{}, {}, RegisterCredentials>, res: R
       });
     }
 
-    const { name, email, password } = req.body;
+    const { name, email, password , role} = req.body;
 
     let user = await User.findOne({ email });
     if (user) {
@@ -28,15 +28,13 @@ export const register = async (req: Request<{}, {}, RegisterCredentials>, res: R
       });
     }
 
-    // ✅ FIXED: Just create the user - let the pre-save hook handle hashing
-    user = new User({ name, email, password });
+   const userRole = role === 'admin' || role === 'author' ? 'client' : (role || 'client');
+
+    user = new User({ name, email, password, role: userRole });
     
     console.log('🔑 Before save - password (plain text):', user.password);
     
-    // The pre-save hook in User model will automatically hash the password
     await user.save();
-
-    console.log('✅ User saved with auto-hashed password');
 
     const payload = {
       user: {
@@ -102,6 +100,13 @@ export const login = async (req: Request<{}, {}, LoginCredentials>, res: Respons
         message: 'Invalid credentials' 
       });
     }
+     if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated. Please contact administrator.'
+      });
+    }
+   
    
     console.log('✅ User found:', user.email);
     console.log('🔑 Stored password hash:', user.password ? 'EXISTS' : 'MISSING');

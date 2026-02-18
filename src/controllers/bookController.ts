@@ -3,77 +3,94 @@ import { Request, Response } from 'express';
 import Book from '../models/Book';
 import { AuthRequest } from '../types/book';
 export class BookController {
- 
-async getBooks(req: AuthRequest, res: Response) {
+ async getBooks(req: Request, res: Response) {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      author,
-      available,
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
-    } = req.query;
+    const books = await Book.find(); 
 
-    // Build query object
-    const query: any = {createdBy: req.user?.id};
-
-    // FIXED: Proper search functionality
-    if (search && typeof search === 'string') {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { author: { $regex: search, $options: 'i' } },
-        { genre: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    // Filter by author (exact match)
-    if (author && typeof author === 'string') {
-      query.author = { $regex: author, $options: 'i' };
-    }
-
-    // Filter by availability
-    if (available !== undefined) {
-      query.available = available === 'true';
-    }
-
-    // Type-safe sorting
-    const sortOptions: any = {};
-    const sortField = typeof sortBy === 'string' ? sortBy : 'createdAt';
-    const sortDirection = sortOrder === 'desc' ? -1 : 1;
-    sortOptions[sortField] = sortDirection;
-
-    // Execute query with pagination
-    const books = await Book.find(query)
-      .sort(sortOptions)
-      .limit(Number(limit))
-      .skip((Number(page) - 1) * Number(limit));
-
-    // Get total count for pagination
-    const total = await Book.countDocuments(query);
-
-    res.status(200).json({
+    res.json({
       success: true,
-      data: books,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit))
-      },
-      message: books.length === 0 ? 'No books found' : 'Books retrieved successfully'
+      data: books
     });
 
   } catch (error) {
-    console.error('Error fetching books:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error while fetching books'
+      message: "Error fetching books"
     });
   }
 }
+
+// async getBooks(req: AuthRequest, res: Response) {
+//   try {
+//     const {
+//       page = 1,
+//       limit = 10,
+//       search,
+//       author,
+//       available,
+//       sortBy = 'createdAt',
+//       sortOrder = 'desc'
+//     } = req.query;
+
+//     // Build query object
+//     const query: any = { isPublic: true };
+
+
+//     // FIXED: Proper search functionality
+//     if (search && typeof search === 'string') {
+//       query.$or = [
+//         { title: { $regex: search, $options: 'i' } },
+//         { author: { $regex: search, $options: 'i' } },
+//         { genre: { $regex: search, $options: 'i' } },
+//         { description: { $regex: search, $options: 'i' } }
+//       ];
+//     }
+
+//     // Filter by author (exact match)
+//     if (author && typeof author === 'string') {
+//       query.author = { $regex: author, $options: 'i' };
+//     }
+
+//     // Filter by availability
+//     if (available !== undefined) {
+//       query.available = available === 'true';
+//     }
+
+//     // Type-safe sorting
+//     const sortOptions: any = {};
+//     const sortField = typeof sortBy === 'string' ? sortBy : 'createdAt';
+//     const sortDirection = sortOrder === 'desc' ? -1 : 1;
+//     sortOptions[sortField] = sortDirection;
+
+//     // Execute query with pagination
+//     const books = await Book.find(query)
+//       .sort(sortOptions)
+//       .limit(Number(limit))
+//       .skip((Number(page) - 1) * Number(limit));
+
+//     // Get total count for pagination
+//     const total = await Book.countDocuments(query);
+
+//     res.status(200).json({
+//       success: true,
+//       data: books,
+//       pagination: {
+//         page: Number(page),
+//         limit: Number(limit),
+//         total,
+//         pages: Math.ceil(total / Number(limit))
+//       },
+//       message: books.length === 0 ? 'No books found' : 'Books retrieved successfully'
+//     });
+
+//   } catch (error) {
+//     console.error('Error fetching books:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Internal server error while fetching books'
+//     });
+//   }
+// }
 
   // GET /api/books/:id - Get single book
   async getBook(req: AuthRequest, res: Response) {

@@ -3,19 +3,14 @@ import bookController from '../controllers/bookController';
 import { auth } from '../middleware/auth';
 
 const router = Router();
-router.use(auth);
-// GET routes
+
 router.get('/', bookController.getBooks);
+router.get('/stats', bookController.getBookStats);
 router.get('/:id', bookController.getBook);
 
-router.get('/stats', bookController.getBookStats);
-// POST routes  
-router.post('/', bookController.createBook);
+router.post('/', auth, bookController.createBook);
+router.put('/:id', auth, bookController.updateBook);
+router.delete('/:id', auth, bookController.deleteBook);
 
-// PUT routes
-router.put('/:id', bookController.updateBook);
-
-// DELETE routes
-router.delete('/:id', bookController.deleteBook);
 
 export default router;
