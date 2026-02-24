@@ -1,32 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
-import { validationResult, ValidationError } from 'express-validator';
+import { validationResult } from 'express-validator';
 
-export const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
+export const handleValidationErrors = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
-    const formattedErrors = errors.array().map((error: ValidationError) => {
-      // Type-safe error formatting
-      if (error.type === 'field') {
-        return {
-          field: error.path,
-          message: error.msg,
-          value: (error as any).value // Value might not always be available
-        };
-      }
-      
-      return {
-        field: error.type,
-        message: error.msg
-      };
-    });
-    
+    const formattedErrors = errors.array().map(err => ({
+      field: err.type === 'field' ? err.path : undefined,
+      message: err.msg,
+      value: (err as any).value ?? undefined
+    }));
+
     return res.status(400).json({
       success: false,
-      message: 'Validation failed',
+      message: errors.array()[0].msg, // ⭐ Send first real error message
       errors: formattedErrors
     });
   }
-  
+
   next();
 };

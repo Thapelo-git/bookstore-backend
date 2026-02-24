@@ -26,7 +26,7 @@ export const register = async (req: Request<{}, {}, RegisterCredentials>, res: R
         success: false,
         message: 'User already exists' 
       });
-    }
+    } 
 
    const userRole = role === 'admin' || role === 'author' ? 'client' : (role || 'client');
 
