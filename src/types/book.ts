@@ -5,23 +5,45 @@ export interface IUser {
   name: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'merchant';
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IBook {
   _id?: string;
+
   title: string;
   author: string;
-  isbn: string;
-  publishedYear: number;
-  available: boolean;
-  genre?: string;
   description?: string;
+
+  price: number;
+  originalPrice?: number;
+
+  coverImage?: string;
+  category?: string;
+
+  stock: number;
+
+  rating: number;
+  reviewCount: number;
+
+  publishedDate?: Date;
+
+  isbn: string;
+  pages?: number;
+  language?: string;
+
+  featured?: boolean;
+  bestseller?: boolean;
+
+  merchantId?: string;
+  merchantName?: string;
+
+  createdBy: string;
+
   createdAt?: Date;
   updatedAt?: Date;
-  createdBy: string;
 }
 
 export interface BookCreateRequest {

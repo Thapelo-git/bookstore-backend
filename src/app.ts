@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { User } from './models';
+import orderRoutes from './routes/order';
+
 // Load environment variables
 dotenv.config();
 
@@ -100,6 +102,7 @@ import bookRoutes from './routes/bookRoutes';
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
+app.use('/api/orders', orderRoutes);
 
 
 // Health check endpoint
