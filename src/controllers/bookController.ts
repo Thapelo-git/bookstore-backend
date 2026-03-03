@@ -8,7 +8,7 @@ export class BookController {
     const books = await Book.find(); 
 
     res.json({
-      success: true,
+      success: true, 
       data: books
     });
 

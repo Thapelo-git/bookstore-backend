@@ -64,7 +64,7 @@ export interface BookResponse {
   message?: string;
   pagination?: {
     page: number;
-    limit: number;
+    limit: number; 
     total: number;
     pages: number;
   };
@@ -108,4 +108,25 @@ export interface ForgotPasswordRequest {
 export interface ResetPasswordRequest {
   token: string;
   newPassword: string;
+}
+export interface IOrderItem {
+  book: string; // ObjectId
+  quantity: number;
+}
+
+export interface IOrder {
+  _id?: string;
+  user: string; // ObjectId
+  items: IOrderItem[];
+  total: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
 }

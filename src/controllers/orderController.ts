@@ -30,19 +30,19 @@ export const createOrder = async (req: AuthRequest, res:Response) => {
     }
 
     const order = await Order.create({
-      user: req.user._id,
+      user: req.user.id,
       items: orderItems,
       total,
       shippingAddress,
     });
-
+    console.log("User",req.user)
     res.status(201).json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 export const getMyOrders = async (req: AuthRequest, res: Response) => {
-  const orders = await Order.find({ user: req.user._id })
+  const orders = await Order.find({ user: req.user.id })
     .populate('items.book')
     .sort({ createdAt: -1 });
 
