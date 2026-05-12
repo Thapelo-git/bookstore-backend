@@ -28,7 +28,7 @@ export const register = async (req: Request<{}, {}, RegisterCredentials>, res: R
       });
     } 
 
-   const userRole = role === 'admin' || role === 'author' ? 'client' : (role || 'client');
+   const userRole = role === 'admin' || role === 'merchant' ? 'client' : (role || 'client');
 
     user = new User({ name, email, password, role: userRole });
     
