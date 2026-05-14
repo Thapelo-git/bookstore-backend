@@ -13,6 +13,7 @@ dotenv.config();
 
 const app = express();
 
+app.set('trust proxy', 1);
 // Vercel provides PORT, use 5001 as fallback for local development
 const PORT = process.env.PORT || 5002;
 
