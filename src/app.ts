@@ -98,13 +98,14 @@ connectDB();
 // Import routes
 import authRoutes from './routes/auth';
 import bookRoutes from './routes/bookRoutes';
+import addressRoutes from './routes/addressRoutes';
 
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/orders', orderRoutes);
-
+app.use('/api/addresses', addressRoutes);  
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
