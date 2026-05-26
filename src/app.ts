@@ -93,7 +93,28 @@ const connectDB = async (): Promise<void> => {
 };
 
 // Connect to database
-connectDB();
+const startServer = async () => {
+  try {
+    console.log('🔗 Connecting to MongoDB...');
+
+    await mongoose.connect(process.env.MONGODB_URI as string);
+
+    console.log('✅ MongoDB Connected successfully');
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📚 API Documentation: http://localhost:${PORT}/api`);
+      console.log(`❤️ Health Check: http://localhost:${PORT}/api/health`);
+    });
+
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -182,69 +203,9 @@ app.use('*', (req, res) => {
 });
 
 // Temporary debug route - add this before your other routes
-app.post('/api/debug/password-check', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    console.log('🔍 DEBUG: Checking password for:', email);
-    console.log('🔍 DEBUG: Input password:', password);
-    
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
-      return res.json({ error: 'User not found' });
-    }
 
-    console.log('🔍 DEBUG: Stored password hash:', user.password);
-    console.log('🔍 DEBUG: Hash length:', user.password.length);
-    console.log('🔍 DEBUG: Hash starts with:', user.password.substring(0, 10));
 
-    // Test manual bcrypt comparison
-    const manualMatch = await bcrypt.compare(password, user.password);
-    console.log('🔍 DEBUG: Manual bcrypt.compare result:', manualMatch);
 
-    // Test if the input password matches the stored hash
-    const testHashes = await Promise.all([
-      bcrypt.hash(password, 10),
-      bcrypt.hash(password, 12),
-      bcrypt.hash('Mol123456', 10), // Hardcoded test
-    ]);
-
-    res.json({
-      userExists: true,
-      inputPassword: password,
-      storedHash: user.password,
-      storedHashLength: user.password.length,
-      manualBcryptMatch: manualMatch,
-      testHashes: {
-        salt10: testHashes[0],
-        salt12: testHashes[1],
-        hardcoded: testHashes[2]
-      }
-    });
-  } catch (error: any) {
-    console.error('🔍 DEBUG Error:', error);
-    res.json({ error: error.message });
-  }
-});
-
-// Add this route to see ALL users and their password hashes
-app.get('/api/debug/users', async (req, res) => {
-  try {
-    const users = await User.find().select('+password');
-    const userData = users.map(user => ({
-      id: user._id,
-      email: user.email,
-      name: user.name,
-      passwordHash: user.password,
-      passwordLength: user.password.length,
-      createdAt: user.createdAt
-    }));
-    
-    res.json({ users: userData });
-  } catch (error: any) {
-    res.json({ error: error.message });
-  }
-});
 // Global error handler
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('🚨 Global Error Handler:', error);

@@ -190,7 +190,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
       success: false,
       message: 'Server error' 
     });
-  }
+  } 
 };
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
