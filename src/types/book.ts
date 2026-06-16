@@ -79,16 +79,17 @@ export interface BookQueryParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
-export interface AuthRequest extends Request {
+export type AuthRequest = Request & {
   user?: {
     id: string;
     email: string;
     role: string;
-    name:string;
-     _id?: any; 
+    name: string;
+    _id?: any;
   };
   resource?: any;
-}
+  cookies?: any;
+};
 
 export interface LoginCredentials {
   email: string;
